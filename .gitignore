@@ -1,6 +1,7 @@
 dist
 node_modules
 .vercel
+.replit-artifact
 .env
 .env.local
 .env.production.local
