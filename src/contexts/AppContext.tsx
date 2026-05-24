@@ -86,8 +86,17 @@ function sanitizeSocial(social: Social): Social {
 }
 
 function sanitizeSiteData(data: SiteData): SiteData {
+  const about = {
+    ...DEFAULT_DATA.about,
+    ...data.about,
+    bio: data.about?.bio ?? DEFAULT_DATA.about.bio,
+    philosophyItems: data.about?.philosophyItems ?? DEFAULT_DATA.about.philosophyItems,
+    skillGroups: data.about?.skillGroups ?? DEFAULT_DATA.about.skillGroups,
+  };
+
   return {
     ...data,
+    about,
     projects: data.projects.map(sanitizeProject),
     certifications: data.certifications.map(sanitizeCertification),
     socials: data.socials.map(sanitizeSocial),

@@ -118,6 +118,9 @@ export default function About() {
   const { data } = useApp();
   const { about } = data;
   const [editingAbout, setEditingAbout] = useState(false);
+  const bio = Array.isArray(about.bio) ? about.bio : [];
+  const philosophyItems = Array.isArray(about.philosophyItems) ? about.philosophyItems : [];
+  const skillGroups = Array.isArray(about.skillGroups) ? about.skillGroups : [];
 
   return (
     <div className="min-h-[100dvh] pt-24 pb-16 px-4">
@@ -130,11 +133,11 @@ export default function About() {
             <div className="space-y-8 p-2 rounded-xl">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
                 className="prose prose-invert max-w-none prose-p:text-muted-foreground prose-p:leading-relaxed">
-                {about.bio.map((para, i) => <p key={i} className={i === 0 ? "text-lg" : ""}>{para}</p>)}
+                {bio.map((para, i) => <p key={i} className={i === 0 ? "text-lg" : ""}>{para}</p>)}
 
                 <h3 className="text-xl font-semibold mt-8 mb-4 text-foreground">Engineering Philosophy</h3>
                 <div className="space-y-6">
-                  {about.philosophyItems.map((item) => (
+                  {philosophyItems.map((item) => (
                     <div key={item.title} className={`border-l-2 ${COLOR_MAP[item.color] ?? 'border-primary'} pl-4`}>
                       <h4 className={`font-mono text-sm ${TITLE_COLOR_MAP[item.color] ?? 'text-primary'} mb-2 uppercase tracking-wider`}>{item.title}</h4>
                       <p className="text-sm text-muted-foreground">{item.body}</p>
@@ -151,7 +154,7 @@ export default function About() {
                 <Terminal className="w-5 h-5" /><span>Technical Stack</span>
               </div>
               <div className="space-y-6">
-                {about.skillGroups.map((skillGroup) => (
+                {skillGroups.map((skillGroup) => (
                   <div key={skillGroup.category}>
                     <div className="text-xs text-muted-foreground uppercase tracking-wider mb-3">{skillGroup.category}</div>
                     <div className="flex flex-wrap gap-2">
