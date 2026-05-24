@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getAdminSession, loginAdmin, logoutAdmin } from "@/lib/api";
+import { getAdminSession, getSiteContent, loginAdmin, logoutAdmin, saveSiteContent } from "@/lib/api";
 
 export interface Project {
   id: string; name: string; position: number;
@@ -37,6 +37,59 @@ export interface SiteData {
   brandText: string;
   about: AboutContent;
   copyrightName: string;
+}
+
+const STORAGE_DATA_KEY = "portfolio_site_data";
+const DEFAULT_GITHUB_URL = "https://github.com/prashyamsmitra-cell";
+
+function normalizeExternalUrl(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+
+  if (!trimmed || trimmed === "#") {
+    return null;
+  }
+
+  if (/^(https?:\/\/|mailto:|tel:)/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed.replace(/^\/+/, "")}`;
+}
+
+function sanitizeProject(project: Project): Project {
+  return {
+    ...project,
+    github_url: normalizeExternalUrl(project.github_url) ?? "",
+    live_url: normalizeExternalUrl(project.live_url),
+  };
+}
+
+function sanitizeCertification(certification: Certification): Certification {
+  return {
+    ...certification,
+    credential_url: normalizeExternalUrl(certification.credential_url) ?? "",
+  };
+}
+
+function sanitizeSocial(social: Social): Social {
+  const fallbackUrl =
+    social.platform === "GitHub"
+      ? DEFAULT_GITHUB_URL
+      : null;
+
+  return {
+    ...social,
+    url: normalizeExternalUrl(social.url) ?? fallbackUrl ?? "",
+  };
+}
+
+function sanitizeSiteData(data: SiteData): SiteData {
+  return {
+    ...data,
+    projects: data.projects.map(sanitizeProject),
+    certifications: data.certifications.map(sanitizeCertification),
+    socials: data.socials.map(sanitizeSocial),
+  };
 }
 
 const DEFAULT_DATA: SiteData = {
@@ -86,8 +139,8 @@ const DEFAULT_DATA: SiteData = {
     { id: "4", name: "Google Cloud Professional Data Engineer", issuer: "Google Cloud", year: 2024, credential_url: "#", position: 4 },
   ],
   socials: [
-    { id: "1", platform: "GitHub", url: "#", position: 1 },
-    { id: "2", platform: "LinkedIn", url: "#", position: 2 },
+    { id: "1", platform: "GitHub", url: DEFAULT_GITHUB_URL, position: 1 },
+    { id: "2", platform: "LinkedIn", url: "", position: 2 },
   ],
 };
 
@@ -161,8 +214,6 @@ function applyThemeToDOM(name: ThemeName) {
   Object.entries(vars).forEach(([key, value]) => root.style.setProperty(key, value));
 }
 
-const STORAGE_DATA_KEY = "portfolio_site_data";
-
 interface AppContextValue {
   data: SiteData;
   updateData: (updater: (prev: SiteData) => SiteData) => void;
@@ -182,11 +233,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<SiteData>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_DATA_KEY);
-      if (stored) return { ...DEFAULT_DATA, ...JSON.parse(stored) };
+      if (stored) {
+        return sanitizeSiteData({ ...DEFAULT_DATA, ...JSON.parse(stored) });
+      }
     } catch {
-      return DEFAULT_DATA;
+      return sanitizeSiteData(DEFAULT_DATA);
     }
-    return DEFAULT_DATA;
+    return sanitizeSiteData(DEFAULT_DATA);
   });
   const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(false);
@@ -200,9 +253,61 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(data));
   }, [data]);
 
-  const updateData = useCallback((updater: (prev: SiteData) => SiteData) => {
-    setData((prev) => updater(prev));
+  useEffect(() => {
+    let isActive = true;
+
+    getSiteContent()
+      .then((payload) => {
+        if (!isActive || !payload.data) {
+          return;
+        }
+
+        setData((prev) =>
+          sanitizeSiteData({
+            ...prev,
+            ...(payload.data as Partial<SiteData>),
+          }),
+        );
+      })
+      .catch(() => {
+        // Keep the locally cached/default content when the backend content endpoint is unavailable.
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_DATA_KEY || !event.newValue) {
+        return;
+      }
+
+      try {
+        setData(sanitizeSiteData({ ...DEFAULT_DATA, ...JSON.parse(event.newValue) }));
+      } catch {
+        // Ignore malformed storage updates and keep the current in-memory state.
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  const updateData = useCallback((updater: (prev: SiteData) => SiteData) => {
+    setData((prev) => {
+      const next = sanitizeSiteData(updater(prev));
+
+      if (isAdmin) {
+        void saveSiteContent(next).catch(() => {
+          // Keep the optimistic UI state even if persistence fails; a later save can retry.
+        });
+      }
+
+      return next;
+    });
+  }, [isAdmin]);
 
   const setTheme = useCallback((name: ThemeName) => {
     setData((prev) => ({ ...prev, theme: name }));

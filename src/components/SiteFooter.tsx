@@ -70,6 +70,9 @@ function SocialsEditDialog({ onClose }: { onClose: () => void }) {
 export function SiteFooter() {
   const { data } = useApp();
   const [editingFooter, setEditingFooter] = useState(false);
+  const socials = [...data.socials]
+    .sort((a, b) => a.position - b.position)
+    .filter((social) => Boolean(social.url));
 
   return (
     <>
@@ -82,7 +85,7 @@ export function SiteFooter() {
               <span className="text-xs text-muted-foreground font-mono">all systems nominal</span>
             </div>
             <div className="flex items-center gap-6">
-              {data.socials.sort((a, b) => a.position - b.position).map((social) => {
+              {socials.map((social) => {
                 const Icon = PLATFORM_ICONS[social.platform] ?? Github;
                 return (
                   <a key={social.id} href={social.url} target="_blank" rel="noopener noreferrer"

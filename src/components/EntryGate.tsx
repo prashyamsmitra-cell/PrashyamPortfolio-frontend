@@ -140,11 +140,19 @@ export function EntryGate() {
 
                 <div className="flex flex-col gap-3 border-t border-border/50 pt-4 md:flex-row md:items-center md:justify-between">
                   <div className="text-xs text-muted-foreground">
-                    <p>You'll receive a quick follow-up email after submitting.</p>
-                    <p>For admin access, use the protected login instead.</p>
+                    <p>Share details if you'd like me to follow up with context.</p>
+                    <p>You can also skip and explore the portfolio right away.</p>
                   </div>
 
                   <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={handleDismiss}
+                      className="rounded border border-border px-4 py-2 text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                      data-testid="button-skip-details"
+                    >
+                      Skip for now
+                    </button>
                     <button
                       type="button"
                       onClick={handleAdminAccess}
@@ -159,7 +167,7 @@ export function EntryGate() {
                       className="rounded bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground transition-opacity disabled:opacity-70"
                       data-testid="button-enter-portfolio"
                     >
-                      {status === "submitting" ? "Saving visit..." : "Enter portfolio"}
+                    {status === "submitting" ? "Saving visit..." : "Enter portfolio"}
                     </button>
                   </div>
                 </div>

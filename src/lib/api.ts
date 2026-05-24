@@ -20,6 +20,10 @@ export type AdminLoginInput = {
   password: string;
 };
 
+export type SiteContentResponse = {
+  data: unknown;
+};
+
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
 
 function resolveUrl(path: string): string {
@@ -80,5 +84,16 @@ export function loginAdmin(input: AdminLoginInput) {
 export function logoutAdmin() {
   return request<{ authenticated: false }>("/api/admin/logout", {
     method: "POST",
+  });
+}
+
+export function getSiteContent() {
+  return request<SiteContentResponse>("/api/site-content");
+}
+
+export function saveSiteContent(data: unknown) {
+  return request<{ ok: true; updatedBy: string }>("/api/admin/site-content", {
+    method: "PUT",
+    body: JSON.stringify({ data }),
   });
 }
