@@ -24,7 +24,9 @@ export interface HeroContent {
   heading: string; subheading: string; philosophy: string;
 }
 export interface AboutContent {
-  bio: string[]; philosophyItems: { color: string; title: string; body: string }[];
+  bio: string[];
+  philosophyItems: { color: string; title: string; body: string }[];
+  skillGroups: { category: string; items: string[] }[];
 }
 export type ThemeName = "mint" | "cyber" | "nova" | "arctic" | "matrix";
 
@@ -123,6 +125,14 @@ const DEFAULT_DATA: SiteData = {
         title: "Boring is Beautiful",
         body: "I prefer proven, robust technologies over the latest hype cycle. I choose PostgreSQL over niche NoSQL databases unless there is a strict operational requirement. Innovation should happen in the product, not the underlying infrastructure.",
       },
+    ],
+    skillGroups: [
+      { category: "Languages", items: ["TypeScript", "Python", "Go", "Rust"] },
+      { category: "Databases", items: ["PostgreSQL", "Redis", "MongoDB", "pgvector"] },
+      { category: "Infrastructure", items: ["Kubernetes", "Docker", "Terraform", "AWS", "GCP"] },
+      { category: "Async Systems", items: ["Bull", "Celery", "RabbitMQ", "Kafka"] },
+      { category: "Realtime", items: ["WebSockets", "Server-Sent Events", "Supabase Realtime"] },
+      { category: "AI / ML", items: ["OpenAI API", "LangChain", "pgvector", "embeddings pipelines"] },
     ],
   },
   projects: [
